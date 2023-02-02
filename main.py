@@ -28,8 +28,7 @@ for y in years_unique:
 df_emission_quantity_years = pandas.DataFrame(emission_quantity_years)
 
 power_emission = df[df['emission'] == 'ภาคพลังงาน']
-# 
-output = []
+#
 value = []
 
 for x in df_emission_quantity_years['emission'].unique():
@@ -39,10 +38,6 @@ for x in df_emission_quantity_years['emission'].unique():
         if [y,x] in value:
             continue
         value.append([x,y])
-
-for v in value:
-    df2 = df_emission_quantity_years[(df_emission_quantity_years['emission'].str.contains(v[0])) | ( df_emission_quantity_years['emission'].str.contains(v[1]))]
-    output.append(dcc.Graph(id=f"{v[0]} {v[1]}",figure=px.bar(df2, x="BE", y="quantity", color="emission", orientation="v", barmode="group")))
 
 fig = px.bar(df_emission_quantity_years, x="BE", y="quantity", color="emission", orientation="v", barmode="group")
 fig2 = px.bar(power_emission, x="BE", y="quantity", color="eng_sub_section")
@@ -64,6 +59,26 @@ def show_data(emission_type1, emission_type2):
     # fig.update_layout(transition_duration=500)
 
     return fig
+
+# 
+df2 = pandas.read_excel("data/ghg-emission-of-thailand-edited-july-2021.xlsx", "Emission ประเทศ (ตารางปกติ)")
+df2.columns = ['BE', 'gas_type', 'net_quantity', 'quantity']
+df2 = df2[:-2]
+df2['LULUCF'] = df2['quantity'] - df2['net_quantity']
+
+df2_1 = df2.iloc[:,[0,1,2]]
+df2_1['quantity_type'] = "net_quantity"
+df2_1.columns.values[2] = 'quantity'
+df2_2 = df2.iloc[:,[0,1,3]]
+df2_2['quantity_type'] = "quantity"
+df2_2.columns.values[2] = 'quantity'
+df2_3 = df2.iloc[:,[0,1,4]]
+df2_3['quantity_type'] = "LULUCF"
+df2_3.columns.values[2] = 'quantity'
+
+df3 = pandas.concat([df2_1,df2_2,df2_3])
+
+fig3 = px.area(df3, x="BE", y="quantity", color="quantity_type")
 
 app.layout = html.Div(
     children=[
@@ -141,6 +156,11 @@ app.layout = html.Div(
             ],
             className="row",
         ),
+        html.Div([
+            html.Div(
+                    [dcc.Graph(id="example-graph-3", figure=fig3)], className="col"
+                ),
+        ]),
         #html.Div(output),
         html.Div([
             html.Button("Hello", className="btn btn-primary")
